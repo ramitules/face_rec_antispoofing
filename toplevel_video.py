@@ -1,3 +1,4 @@
+import time
 from tkinter import Toplevel, Label
 from PIL import Image, ImageTk
 import mediapipe as mp
@@ -17,18 +18,18 @@ class BaseVideo(Toplevel):
 
         self.configure_video()
 
+        # Images
         self.img_step0 = cv2.imread('media/human_verification.png')
         self.img_step1 = cv2.imread('media/step_1.png')
         self.img_step2 = cv2.imread('media/step_2.png')
         self.img_check = cv2.imread('media/check.png')
         self.img_check_big = cv2.imread('media/check_big.png')
-        self.img_completed = cv2.imread('media/close_window.png')
 
         # Some variables
+        self.completed = False
         self.blink = False
         self.count = 0
-        self.sample = 0
-        self.step = 0
+        self.step = 1
 
         # Coordinates
         self.points_x = None
@@ -39,8 +40,9 @@ class BaseVideo(Toplevel):
         self.frame_to_save = None
 
         # Offset
-        self.OFFSETY = 40
+        self.OFFSETY = 50
         self.OFFSETX = 20
+        self.OFFSETY_UP = 65
 
         # Threshold
         self.THRESHOLD = 0.5
@@ -80,6 +82,9 @@ class BaseVideo(Toplevel):
             self.label_video.configure(image=img)
             self.label_video.image = img
             self.label_video.after(10, self.biometric_log)
+
+            if self.completed:
+                self.destroy()
 
         else:
             self.cap.release()
@@ -129,7 +134,7 @@ class BaseVideo(Toplevel):
         x3, y3 = li[374][1:]
         x4, y4 = li[386][1:]
         length2 = math.hypot(x4 - x3, y4 - y3)
-        # print(f'Ojo Izquierdo: {length1}\nOjo derecho: {length2}')
+        print(f'Ojo Izquierdo: {length1}\nOjo derecho: {length2}')
 
         # Parietal
         x5, y5 = li[139][1:]
@@ -172,98 +177,91 @@ class BaseVideo(Toplevel):
 
             # Offset height
             offset_y = (self.OFFSETY / 100) * h
-            yi = int(yi - int(offset_y / 2))
+            yi = int(yi - int(offset_y / 2)) - self.OFFSETY_UP
             h = int(h + offset_y)
             yf = yi + h
 
             # Coordinates to take picture of face
-            self.to_cut = [yi, yf, xi, xf]
+            self.my_position = [yi, yf, xi, xf]
 
-            self.steps(xi, yi, w, h)
+            self.check_proximity()
 
-    def steps(self, xi: int, yi: int, w: int, h: int):
-        if self.step == 0:
-            # Draw recognition rectangle
-            cv2.rectangle(self.frame, (xi, yi, w, h), (255, 255, 255), 2)
+    def check_proximity(self):
+        distance_eyes = self.points_x[5] - self.points_x[4]
 
-            # Img step 0
-            h_step0, w_step0, c = self.img_step0.shape
-            self.frame[50:50 + h_step0, 50:50 + w_step0] = self.img_step0
-
-            # Img step 1
-            h_step1, w_step1, c = self.img_step1.shape
-            self.frame[50:50 + h_step1, 1030:1030 + w_step1] = self.img_step1
-
-            # Img step 2
-            h_step2, w_step2, c = self.img_step2.shape
-            self.frame[330:330 + h_step2, 1030:1030 + w_step2] = self.img_step2
-
-            self.face_center()
-
-        if self.step == 1:
-            # Draw
-            cv2.rectangle(self.frame, (xi, yi, w, h), (0, 255, 0), 2)
-
-            # Img check Liveness
-            h_live, w_live, c = self.img_completed.shape
-            self.frame[50:50 + h_live, 50:50 + w_live] = self.img_completed
-
-            # FINISHED ALL STEPS
-
-    def face_center(self):
-        if self.points_x[6] > self.points_x[4] and self.points_x[7] < self.points_x[5]:
-            h_check, w_check, c = self.img_check.shape
-            self.frame[200:200 + h_check, 1123:1123 + w_check] = self.img_check
-
-            # Blink count
-            self.blink_counter()
-
-            # Ready to go
-            self.all_done()
+        # Draw recognition rectangle
+        if 300 < distance_eyes < 340:
+            self.load_images()
+            self.steps()
 
         else:
             self.count = 0
 
-    def blink_counter(self):
-        if self.lengths[0] <= 10 and self.lengths[1] <= 10 and not self.blink:
+    def load_images(self):
+        # Img step 1
+        h_step0, w_step0, c = self.img_step0.shape
+        self.frame[50:50 + h_step0, 50:50 + w_step0] = self.img_step0
+
+        # Img step 2
+        h_step1, w_step1, c = self.img_step1.shape
+        self.frame[50:50 + h_step1, 1030:1030 + w_step1] = self.img_step1
+
+        # Img step 3
+        h_step2, w_step2, c = self.img_step2.shape
+        self.frame[330:330 + h_step2, 1030:1030 + w_step2] = self.img_step2
+
+    def steps(self):
+        self.step1()
+        self.step2()
+
+        if self.step == 3:
+            self.step3()
+
+    def step1(self):  # Face center
+        if self.points_x[6] > self.points_x[4] and self.points_x[7] < self.points_x[5]:
+            h_check, w_check, c = self.img_check.shape
+            self.frame[200:200 + h_check, 1123:1123 + w_check] = self.img_check
+
+            self.step = 2
+
+        else:
+            self.count = 0
+
+    def step2(self):  # Blink counter
+        text = f'Blinks: {int(self.count)}'
+        coordinates = (1120, 500)
+        font = cv2.FONT_HERSHEY_SCRIPT_COMPLEX
+        font_scale = 0.5
+        white = (0, 0, 0)
+
+        if self.lengths[0] <= 15 and self.lengths[1] <= 15 and not self.blink:
             self.count += 1
             self.blink = True
 
-        elif self.lengths[0] > 10 and self.lengths[1] > 10 and self.blink:
+        elif self.lengths[0] > 15 and self.lengths[1] > 15 and self.blink:
             self.blink = False
 
-        cv2.putText(self.frame,
-                    f'Blinks: {int(self.count)}',
-                    (1120, 500),
-                    cv2.FONT_HERSHEY_SCRIPT_COMPLEX,
-                    0.5,
-                    (0, 0, 0),
-                    1)
+        cv2.putText(self.frame, text, coordinates, font, font_scale, white, 1)
 
-    def all_done(self):
         if self.count > 2:
             # Img Check
             h_check, w_check, c = self.img_check_big.shape
             self.frame[478:478 + h_check, 1121:1121 + w_check] = self.img_check_big
 
-            # Eyes opened
-            self.check_eyes_opened()
+            self.step = 3
 
-    def check_eyes_opened(self):
-        yi = self.to_cut[0]
-        yf = self.to_cut[1]
-        xi = self.to_cut[2]
-        xf = self.to_cut[3]
+    def step3(self):  # Take a picture
+        yi, yf, xi, xf = self.my_position[:]
 
-        if self.lengths[0] > 15 and self.lengths[1] > 15:
+        # If eyes are opened
+        if self.lengths[0] > 20 and self.lengths[1] > 20:
             # Cut
             cut = self.frame_to_save[yi:yf, xi:xf]
 
             # Save face
             cv2.imwrite('./database/faces/face.png', cut)
 
-            self.step = 1
-
+            self.completed = True
 
     def configure_video(self):
         self.label_video.place(x=0, y=0)
@@ -271,6 +269,12 @@ class BaseVideo(Toplevel):
         self.cap.set(4, 720)
 
     def destroy(self):
+        if self.completed:
+            print('Picture saved. Registration completed.')
+
+        else:
+            print('Abort.')
+
         self.cap.release()
         super().destroy()
         print('Cam closed')
