@@ -261,12 +261,6 @@ class BaseVideo(Toplevel):
         self.cap.set(4, 720)
 
     def destroy(self):
-        if self.completed:
-            print('Picture saved. Registration completed.')
-
-        else:
-            print('Abort.')
-
         self.cap.release()
         super().destroy()
         print('Cam closed')
