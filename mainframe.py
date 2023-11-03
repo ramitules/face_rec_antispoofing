@@ -3,6 +3,7 @@ from tkinter import messagebox as mb
 from PIL import Image, ImageTk
 from biometric_register import BiometricRegister
 from biometric_login import BiometricLogin
+import re
 
 
 class Mainframe(Tk):
@@ -99,9 +100,11 @@ class Mainframe(Tk):
         self.button_send_face.place(relx=0.7573, rely=0.5743)
 
     def send_signup(self):
-        if not self.sign_up_name.get() or \
-                not self.sign_up_user.get() or \
-                not self.sign_up_pass.get():
+        name = self.sign_up_name.get()
+        user = self.sign_up_user.get()
+        password = self.sign_up_pass.get()
+
+        if not name or not user or not password:
             mb.showerror('Error', 'Missing one or more fields')
             return
 
@@ -109,18 +112,26 @@ class Mainframe(Tk):
             if not mb.askyesno('Warning', 'Are you sure you want to continue without biometric information?'):
                 return
 
-        if len(self.sign_up_name.get()) < 4:
+        if len(name) < 4:
             mb.showerror('Error', 'Name must be at least four characters long')
             return
 
-        if len(self.sign_up_pass.get()) < 6:
+        if len(user) < 4:
+            mb.showerror('Error', 'Username must be at least four characters long')
+            return
+
+        if len(password) < 6:
             mb.showerror('Error', 'Password must be at least six characters long')
             return
 
-        if self.sign_up_pass.get().isalpha():
+        if not re.search(r'[A-Z]+', password):
+            mb.showerror('Error', 'Password must have at least one capital letter')
+            return
+
+        if not re.search(r'\d+', password):
             mb.showerror('Error', 'Password must have at least one number')
             return
-        
+
         return
 
     def send_signin(self):
