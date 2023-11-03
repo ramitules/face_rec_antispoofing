@@ -1,5 +1,5 @@
 import time
-from tkinter import Toplevel, Label
+from tkinter import Toplevel, Label, messagebox
 from PIL import Image, ImageTk
 import mediapipe as mp
 import cv2
@@ -19,11 +19,9 @@ class BaseVideo(Toplevel):
         self.configure_video()
 
         # Images
-        self.img_step0 = cv2.imread('media/human_verification.png')
-        self.img_step1 = cv2.imread('media/step_1.png')
-        self.img_step2 = cv2.imread('media/step_2.png')
-        self.img_check = cv2.imread('media/check.png')
-        self.img_check_big = cv2.imread('media/check_big.png')
+        self.img_side = cv2.imread('media/side_panel.png')
+        self.img_check_1 = cv2.imread('media/check_1.png')
+        self.img_check_2 = cv2.imread('media/check_2.png')
 
         # Some variables
         self.completed = False
@@ -86,9 +84,6 @@ class BaseVideo(Toplevel):
             if self.completed:
                 self.destroy()
 
-        else:
-            self.cap.release()
-
     def inference(self):
         result = self.facemesh.process(self.frame)
 
@@ -134,7 +129,7 @@ class BaseVideo(Toplevel):
         x3, y3 = li[374][1:]
         x4, y4 = li[386][1:]
         length2 = math.hypot(x4 - x3, y4 - y3)
-        print(f'Ojo Izquierdo: {length1}\nOjo derecho: {length2}')
+        # print(f'Ojo Izquierdo: {length1}\nOjo derecho: {length2}')
 
         # Parietal
         x5, y5 = li[139][1:]
@@ -198,17 +193,9 @@ class BaseVideo(Toplevel):
             self.count = 0
 
     def load_images(self):
-        # Img step 1
-        h_step0, w_step0, c = self.img_step0.shape
-        self.frame[50:50 + h_step0, 50:50 + w_step0] = self.img_step0
-
-        # Img step 2
-        h_step1, w_step1, c = self.img_step1.shape
-        self.frame[50:50 + h_step1, 1030:1030 + w_step1] = self.img_step1
-
-        # Img step 3
-        h_step2, w_step2, c = self.img_step2.shape
-        self.frame[330:330 + h_step2, 1030:1030 + w_step2] = self.img_step2
+        # Side panel img
+        height, width, c = self.img_side.shape
+        self.frame[0:0 + height, 0:0 + width] = self.img_side
 
     def steps(self):
         self.step1()
@@ -219,8 +206,9 @@ class BaseVideo(Toplevel):
 
     def step1(self):  # Face center
         if self.points_x[6] > self.points_x[4] and self.points_x[7] < self.points_x[5]:
-            h_check, w_check, c = self.img_check.shape
-            self.frame[200:200 + h_check, 1123:1123 + w_check] = self.img_check
+            # Side panel img check 1
+            height, width, c = self.img_check_1.shape
+            self.frame[0:0 + height, 0:0 + width] = self.img_check_1
 
             self.step = 2
 
@@ -229,7 +217,7 @@ class BaseVideo(Toplevel):
 
     def step2(self):  # Blink counter
         text = f'Blinks: {int(self.count)}'
-        coordinates = (1120, 500)
+        coordinates = (115, 500)
         font = cv2.FONT_HERSHEY_SCRIPT_COMPLEX
         font_scale = 0.5
         white = (0, 0, 0)
@@ -244,9 +232,9 @@ class BaseVideo(Toplevel):
         cv2.putText(self.frame, text, coordinates, font, font_scale, white, 1)
 
         if self.count > 2:
-            # Img Check
-            h_check, w_check, c = self.img_check_big.shape
-            self.frame[478:478 + h_check, 1121:1121 + w_check] = self.img_check_big
+            # Side panel img check 2
+            height, width, c = self.img_check_2.shape
+            self.frame[0:0 + height, 0:0 + width] = self.img_check_2
 
             self.step = 3
 
@@ -255,11 +243,15 @@ class BaseVideo(Toplevel):
 
         # If eyes are opened
         if self.lengths[0] > 20 and self.lengths[1] > 20:
-            # Cut
-            cut = self.frame_to_save[yi:yf, xi:xf]
+            try:
+                # Cut
+                cut = self.frame_to_save[yi:yf, xi:xf]
 
-            # Save face
-            cv2.imwrite('./database/faces/face.png', cut)
+                # Save face
+                cv2.imwrite('./database/faces/face.png', cut)
+
+            except cv2.error:
+                print('Error. Try again')
 
             self.completed = True
 

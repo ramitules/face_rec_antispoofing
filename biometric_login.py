@@ -14,22 +14,26 @@ class BiometricLogin(BaseVideo):
         self.user = user
         self.password = password
         self.path_faces = './database/faces'
+        self.images, self.users = [], []
+        self.faces = os.listdir(self.path_faces)
+
+    def step3(self):
+        # Find faces
+        faces = fr.face_locations(self.frame_to_save)
+        faces_cod = fr.face_encodings(self.frame_to_save, faces)
+
+
 
     def login(self):
-        # DB faces
-        images = []
-        names = []
-        faces = os.listdir(self.path_faces)
-
-        for face in faces:
+        for face in self.faces:
             # Read img
             imgdb = cv2.imread(f'{self.path_faces}/{face}')
             # Save in memory
-            images.append(imgdb)
+            self.images.append(imgdb)
             # Save name in memory
-            names.append(os.path.splitext(face)[0])
+            self.users.append(os.path.splitext(face)[0])
 
-        FaceCode = self.face_codification(images)
+        FaceCode = self.face_codification(self.images)
 
     def face_codification(self, images: list):
         code_list = []

@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import messagebox as mb
 from PIL import Image, ImageTk
 from biometric_register import BiometricRegister
+from biometric_login import BiometricLogin
 
 
 class Mainframe(Tk):
@@ -126,7 +127,7 @@ class Mainframe(Tk):
         pass
 
     def face_login(self):
-        pass
+        BiometricLogin(self).biometric_log()
 
     def face_register(self):
         BiometricRegister(self).biometric_log()
