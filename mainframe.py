@@ -141,4 +141,6 @@ class Mainframe(Tk):
         BiometricLogin(self).biometric_log()
 
     def face_register(self):
-        BiometricRegister(self).biometric_log()
+        face_rec_frame = BiometricRegister(self)
+
+        face_rec_frame.biometric_log()

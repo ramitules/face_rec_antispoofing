@@ -1,5 +1,4 @@
-import time
-from tkinter import Toplevel, Label, messagebox
+from tkinter import Toplevel, Label
 from PIL import Image, ImageTk
 import mediapipe as mp
 import cv2
@@ -11,6 +10,7 @@ class BaseVideo(Toplevel):
     def __init__(self, master):
         super().__init__(master=master)
         self.geometry('1280x720')
+        self.master = master
 
         # Label & video
         self.label_video = Label(self)
@@ -238,22 +238,8 @@ class BaseVideo(Toplevel):
 
             self.step = 3
 
-    def step3(self):  # Take a picture
-        yi, yf, xi, xf = self.my_position[:]
-
-        # If eyes are opened
-        if self.lengths[0] > 20 and self.lengths[1] > 20:
-            try:
-                # Cut
-                cut = self.frame_to_save[yi:yf, xi:xf]
-
-                # Save face
-                cv2.imwrite('./database/faces/face.png', cut)
-
-            except cv2.error:
-                print('Error. Try again')
-
-            self.completed = True
+    def step3(self):  # Global step - override
+        pass
 
     def configure_video(self):
         self.label_video.place(x=0, y=0)
