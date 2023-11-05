@@ -61,16 +61,11 @@ def fetch_user(user: str, pas: str):
 
     res = connection.execute(query, (user, pas)).fetchone()
 
-    confirmed = True
-
-    if not res:
-        mb.showerror(
-            title='Not found',
-            message='User not found'
-        )
-
-        confirmed = False
-
     connection.close()
 
-    return confirmed
+    if not res:
+        return None
+
+    res = [x for x in res]
+
+    return res

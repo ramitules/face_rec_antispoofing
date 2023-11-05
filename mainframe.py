@@ -1,5 +1,4 @@
 from tkinter import *
-from PIL import Image, ImageTk
 from biometric_register import BiometricRegister
 from biometric_login import BiometricLogin
 from database_handler import *
@@ -11,24 +10,17 @@ class Mainframe(Tk):
         super().__init__()
         # Main screen config
         self.title('Face Recognition')
-        self.geometry('1362x768')
+        self.geometry('1366x768')
 
         # Load images
-        self.img_background = ImageTk.PhotoImage(self.resize_image('background'))
-        self.img_sign_up = ImageTk.PhotoImage(self.resize_image('sign_up'))
-        self.img_sign_in = ImageTk.PhotoImage(self.resize_image('sign_in'))
-        self.img_form_login = ImageTk.PhotoImage(self.resize_image('form_login'))
-        self.img_form_reg = ImageTk.PhotoImage(self.resize_image('form_register'))
-        self.img_send_button = ImageTk.PhotoImage(self.resize_image('send_button'))
-        self.img_face_rec_button = ImageTk.PhotoImage(self.resize_image('face_rec_button'))
+        self.img_background = PhotoImage(file='./media/background_768.png')
+        self.img_background_e = PhotoImage(file='./media/background_720_empty.png')
+        self.img_face_rec_signup = PhotoImage(file='./media/button.png')
+        self.img_send_button = PhotoImage(file='./media/send_button.png')
+        self.img_face_rec_button = PhotoImage(file='./media/face_rec_button.png')
 
         # Load labels
         self.label_background = Label(self, image=self.img_background)
-        self.label_sign_in = Label(self, image=self.img_sign_in)
-        self.label_sign_up = Label(self, image=self.img_sign_up)
-        self.label_register = Label(self, image=self.img_form_reg)
-        self.label_form_login = Label(self, image=self.img_form_login)
-        self.label_form_reg = Label(self, image=self.img_form_reg)
 
         # Load inputs
         self.sign_up_name = Entry(self)
@@ -41,22 +33,13 @@ class Mainframe(Tk):
         self.button_send_up = Button(self, image=self.img_send_button)
         self.button_send_in = Button(self, image=self.img_send_button)
         self.button_send_face = Button(self, image=self.img_face_rec_button)
-        self.button_face_rec = Button(self, text='Begin', fg='white', bg='grey')
+        self.button_face_rec = Button(self, image=self.img_face_rec_signup)
 
         # Widget attributes
         self.config_widgets()
 
         # Widget position
         self.place_widgets()
-
-    def resize_image(self, path: str):
-        width_factor = 1.4056
-        height_factor = 1.40625
-
-        img = Image.open(f'./media/{path}.png')
-        img = img.resize((int(img.width / width_factor), int(img.height / height_factor)))
-
-        return img
 
     def config_widgets(self):
         for widget in self.winfo_children():
@@ -74,7 +57,13 @@ class Mainframe(Tk):
                 widget['activeforeground'] = 'grey'
                 widget['activebackground'] = 'black'
 
-        # Buttons
+        self.button_face_rec.configure(text='Begin', fg='white', compound='center')
+
+        # Input command when 'ENTER' is pressed
+        self.sign_up_pass.bind('<Return>', lambda x: self.send_signup())
+        self.sign_in_pass.bind('<Return>', lambda x: self.send_signin())
+
+        # Buttons command
         self.button_send_up['command'] = self.send_signup
         self.button_send_in['command'] = self.send_signin
         self.button_send_face['command'] = self.face_login
@@ -85,19 +74,17 @@ class Mainframe(Tk):
         self.label_background.place(x=0, y=0, relheight=1, relwidth=1)
 
         # Sign up
-        self.label_sign_up.place(relx=0.0984, rely=0.0875)
-        self.label_form_reg.place(relx=0.0984, rely=0.2642)
-        self.button_send_up.place(relx=0.1984, rely=0.5743)
-        self.sign_up_name.place(relx=0.242, rely=0.321)
-        self.sign_up_user.place(relx=0.242, rely=0.37)
-        self.sign_up_pass.place(relx=0.242, rely=0.418)
-        self.button_face_rec.place(relx=0.3172, rely=0.46)
+        self.sign_up_name.place(x=397, y=248)
+        self.sign_up_user.place(x=397, y=288)
+        self.sign_up_pass.place(x=397, y=328)
+        self.button_send_up.place(x=303, y=448)
+        self.button_face_rec.place(x=423, y=360)
 
         # Sign in
-        self.label_sign_in.place(relx=0.6161, rely=0.0875)
-        self.label_form_login.place(relx=0.6161, rely=0.2642)
-        self.button_send_in.place(relx=0.645, rely=0.5743)
-        self.button_send_face.place(relx=0.7573, rely=0.5743)
+        self.sign_in_user.place(x=1050, y=288)
+        self.sign_in_pass.place(x=1050, y=328)
+        self.button_send_in.place(x=802, y=448)
+        self.button_send_face.place(x=1011, y=436)
 
     def send_signup(self):
         name = self.sign_up_name.get()
@@ -107,10 +94,6 @@ class Mainframe(Tk):
         if not name or not user or not password:
             mb.showerror('Error', 'Missing one or more fields')
             return
-
-        if self.button_send_face['state'] is not 'disabled':
-            if not mb.askyesno('Warning', 'Are you sure you want to continue without biometric information?'):
-                return
 
         if len(name) < 4:
             mb.showerror('Error', 'Name must be at least four characters long')
@@ -132,7 +115,12 @@ class Mainframe(Tk):
             mb.showerror('Error', 'Password must have at least one number')
             return
 
+        # User creation with SQLite3 custom function
         if new_user(name=name, user=user, pas=password):
+            if self.button_send_face['state'] != 'disabled':
+                if not mb.askyesno('Warning', 'Are you sure you want to continue without biometric information?'):
+                    return
+
             # Empty Entries
             self.sign_up_name.delete(0, END)
             self.sign_up_user.delete(0, END)
@@ -141,7 +129,44 @@ class Mainframe(Tk):
             return mb.showinfo('Success', 'User created successfully')
 
     def send_signin(self):
-        pass
+        user = self.sign_in_user.get()
+        password = self.sign_in_pass.get()
+
+        credentials = fetch_user(user, password)
+
+        # If user exists, change the main window
+        if credentials:
+            self.change_background()
+            self.show_user_info(credentials)
+
+        else:
+            mb.showerror('Not found', 'User not found')
+
+    def change_background(self):
+        self.label_background['image'] = self.img_background_e
+        self.geometry('1280x720')
+
+        # Destroy everything except background and images
+        for widget in self.winfo_children():
+            if isinstance(widget, Label) or isinstance(widget, PhotoImage):
+                continue
+
+            widget.destroy()
+
+    def show_user_info(self, credentials: tuple):
+        id = f'ID:\t{credentials[0]}'
+        name = f'Name:\t{credentials[1]}'
+        user = f'User:\t{credentials[2]}'
+
+        label_welcome = Label(self, text='Welcome!', fg='white', bg='black')
+        label_id = Label(self, text=id, fg='white', bg='black')
+        label_name = Label(self, text=name, fg='white', bg='black')
+        label_user = Label(self, text=user, fg='white', bg='black')
+
+        label_welcome.place(x=427, y=210)
+        label_id.place(x=427, y=240)
+        label_name.place(x=427, y=270)
+        label_user.place(x=427, y=300)
 
     def face_login(self):
         BiometricLogin(self).biometric_log()

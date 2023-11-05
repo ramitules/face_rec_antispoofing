@@ -27,7 +27,7 @@ class BiometricRegister(BaseVideo):
     def destroy(self):
         if self.completed:
             # Face recognition completed. Button not needed
-            self.master.button_face_rec['text'] = 'Done'
+            self.master.button_face_rec['text'] = 'Completed'
             self.master.button_face_rec['state'] = 'disabled'
 
             print('Picture saved. Registration completed.')
