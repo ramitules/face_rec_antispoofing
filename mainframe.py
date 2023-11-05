@@ -1,8 +1,8 @@
 from tkinter import *
-from tkinter import messagebox as mb
 from PIL import Image, ImageTk
 from biometric_register import BiometricRegister
 from biometric_login import BiometricLogin
+from database_handler import *
 import re
 
 
@@ -108,7 +108,7 @@ class Mainframe(Tk):
             mb.showerror('Error', 'Missing one or more fields')
             return
 
-        if self.button_send_face['text'] == 'Begin':
+        if self.button_send_face['state'] is not 'disabled':
             if not mb.askyesno('Warning', 'Are you sure you want to continue without biometric information?'):
                 return
 
@@ -132,7 +132,13 @@ class Mainframe(Tk):
             mb.showerror('Error', 'Password must have at least one number')
             return
 
-        return
+        if new_user(name=name, user=user, pas=password):
+            # Empty Entries
+            self.sign_up_name.delete(0, END)
+            self.sign_up_user.delete(0, END)
+            self.sign_up_pass.delete(0, END)
+
+            return mb.showinfo('Success', 'User created successfully')
 
     def send_signin(self):
         pass
