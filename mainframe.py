@@ -1,8 +1,12 @@
 from tkinter import *
+import cv2
+from PIL import ImageTk, Image
+import imutils
 from biometric_register import BiometricRegister
 from biometric_login import BiometricLogin
 from database_handler import *
 import re
+import os
 
 
 class Mainframe(Tk):
@@ -33,7 +37,7 @@ class Mainframe(Tk):
         self.button_send_up = Button(self, image=self.img_send_button)
         self.button_send_in = Button(self, image=self.img_send_button)
         self.button_send_face = Button(self, image=self.img_face_rec_button)
-        self.button_face_rec = Button(self, image=self.img_face_rec_signup)
+        self.button_new_face = Button(self, image=self.img_face_rec_signup)
 
         # Widget attributes
         self.config_widgets()
@@ -57,7 +61,7 @@ class Mainframe(Tk):
                 widget['activeforeground'] = 'grey'
                 widget['activebackground'] = 'black'
 
-        self.button_face_rec.configure(text='Begin', fg='white', compound='center')
+        self.button_new_face.configure(text='Begin', fg='white', compound='center')
 
         # Input command when 'ENTER' is pressed
         self.sign_up_pass.bind('<Return>', lambda x: self.send_signup())
@@ -67,7 +71,7 @@ class Mainframe(Tk):
         self.button_send_up['command'] = self.send_signup
         self.button_send_in['command'] = self.send_signin
         self.button_send_face['command'] = self.face_login
-        self.button_face_rec['command'] = self.face_register
+        self.button_new_face['command'] = self.face_register
 
     def place_widgets(self):
         # Background
@@ -78,7 +82,7 @@ class Mainframe(Tk):
         self.sign_up_user.place(x=397, y=288)
         self.sign_up_pass.place(x=397, y=328)
         self.button_send_up.place(x=303, y=448)
-        self.button_face_rec.place(x=423, y=360)
+        self.button_new_face.place(x=423, y=360)
 
         # Sign in
         self.sign_in_user.place(x=1050, y=288)
@@ -115,12 +119,12 @@ class Mainframe(Tk):
             mb.showerror('Error', 'Password must have at least one number')
             return
 
+        if self.button_new_face['state'] != 'disabled':
+            if not mb.askyesno('Warning', 'Are you sure you want to continue without biometric information?'):
+                return
+
         # User creation with SQLite3 custom function
         if new_user(name=name, user=user, pas=password):
-            if self.button_send_face['state'] != 'disabled':
-                if not mb.askyesno('Warning', 'Are you sure you want to continue without biometric information?'):
-                    return
-
             # Empty Entries
             self.sign_up_name.delete(0, END)
             self.sign_up_user.delete(0, END)
@@ -158,6 +162,18 @@ class Mainframe(Tk):
         name = f'Name:\t{credentials[1]}'
         user = f'User:\t{credentials[2]}'
 
+        path_face_img = f'{credentials[0]}.png'
+
+        if path_face_img in os.listdir('./database/faces'):
+            img = cv2.imread(f'./database/faces/{path_face_img}')
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img = imutils.resize(img, width=150)
+            img = Image.fromarray(img)
+
+            self.img_face = ImageTk.PhotoImage(image=img)
+            label_face = Label(self, image=self.img_face)
+            label_face.place(x=600, y=180)
+
         label_welcome = Label(self, text='Welcome!', fg='white', bg='black')
         label_id = Label(self, text=id, fg='white', bg='black')
         label_name = Label(self, text=name, fg='white', bg='black')
@@ -169,7 +185,24 @@ class Mainframe(Tk):
         label_user.place(x=427, y=300)
 
     def face_login(self):
-        BiometricLogin(self).biometric_log()
+        face_rec_frame = BiometricLogin(self)
+
+        face_rec_frame.biometric_log()
+
+        id = face_rec_frame.id
+
+        if not id:
+            mb.showerror('Not found', 'This user doesn\'t have biometric information')
+            return
+
+        credentials = fetch_user_id(id)
+
+        if credentials:
+            self.change_background()
+            self.show_user_info(credentials)
+
+        else:
+            mb.showerror('Not found', 'User not found')
 
     def face_register(self):
         face_rec_frame = BiometricRegister(self)

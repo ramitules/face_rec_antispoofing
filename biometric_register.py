@@ -1,4 +1,5 @@
 from toplevel_video import BaseVideo
+from database_handler import last_user_id
 import cv2
 
 
@@ -16,8 +17,11 @@ class BiometricRegister(BaseVideo):
                 # Cut
                 cut = self.frame_to_save[yi:yf, xi:xf]
 
+                # Filename = new user ID
+                path = last_user_id()
+
                 # Save face
-                cv2.imwrite('./database/faces/face.png', cut)
+                cv2.imwrite(f'./database/faces/{path}.png', cut)
 
             except cv2.error:
                 print('Error. Try again')
@@ -27,8 +31,8 @@ class BiometricRegister(BaseVideo):
     def destroy(self):
         if self.completed:
             # Face recognition completed. Button not needed
-            self.master.button_face_rec['text'] = 'Completed'
-            self.master.button_face_rec['state'] = 'disabled'
+            self.master.button_new_face['text'] = 'Completed'
+            self.master.button_new_face['state'] = 'disabled'
 
             print('Picture saved. Registration completed.')
 

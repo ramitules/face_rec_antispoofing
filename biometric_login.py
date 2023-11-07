@@ -12,9 +12,9 @@ class BiometricLogin(BaseVideo):
         self.title('Biometric sign in')
 
         # Variables
-        self.user = str()
+        self.id = ''
         self.path_faces = './database/faces'
-        self.users = []
+        self.ids = []
         self.faces = os.listdir(self.path_faces)
         self.codifications = self.login()
 
@@ -35,16 +35,9 @@ class BiometricLogin(BaseVideo):
             minn = np.argmin(sim)
 
             if match[minn]:
-                # Username
-                username = self.users[minn].upper()
+                self.id = self.ids[minn]
 
-                self.profile()
-
-    def profile(self):
-        self.user = 'Ramiro'
-        # CODE HERE
-
-        self.completed = True
+                self.completed = True
 
     def login(self):
         images = []
@@ -55,7 +48,7 @@ class BiometricLogin(BaseVideo):
             # Save in memory
             images.append(imgdb)
             # Save name in memory
-            self.users.append(os.path.splitext(face)[0])
+            self.ids.append(os.path.splitext(face)[0])
 
         return self.face_codification(images)
 
@@ -76,7 +69,7 @@ class BiometricLogin(BaseVideo):
 
     def destroy(self):
         if self.completed:
-            print(f'Hello {self.user}!')
+            print(f'Hello {self.id}!')
 
         else:
             print('Abort.')
