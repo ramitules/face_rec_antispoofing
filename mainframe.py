@@ -1,4 +1,3 @@
-import threading
 from tkinter import *
 import cv2
 from PIL import ImageTk, Image
