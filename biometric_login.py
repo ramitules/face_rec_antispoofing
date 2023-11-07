@@ -3,10 +3,13 @@ import cv2
 import numpy as np
 import face_recognition as fr
 from toplevel_video import BaseVideo
+from tkinter import messagebox as mb
+from tkinter import Tk
+from database_handler import fetch_user_id
 
 
 class BiometricLogin(BaseVideo):
-    def __init__(self, master):
+    def __init__(self, master: Tk):
         super().__init__(master=master)
 
         self.title('Biometric sign in')
@@ -68,10 +71,20 @@ class BiometricLogin(BaseVideo):
         return code_list
 
     def destroy(self):
-        if self.completed:
-            print(f'Hello {self.id}!')
+        if not self.completed:
+            print('Abort.')
 
         else:
-            print('Abort.')
+            if not self.id:
+                mb.showerror('Not found', 'This user doesn\'t have biometric information')
+
+            credentials = fetch_user_id(int(self.id))
+
+            if credentials:
+                self.master.change_background()
+                self.master.show_user_info(credentials)
+
+            else:
+                mb.showerror('Not found', 'User not found')
 
         super().destroy()

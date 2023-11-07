@@ -1,3 +1,4 @@
+import threading
 from tkinter import *
 import cv2
 from PIL import ImageTk, Image
@@ -155,6 +156,9 @@ class Mainframe(Tk):
             if isinstance(widget, Label) or isinstance(widget, PhotoImage):
                 continue
 
+            elif isinstance(widget, Toplevel):
+                continue
+
             widget.destroy()
 
     def show_user_info(self, credentials: tuple):
@@ -188,21 +192,6 @@ class Mainframe(Tk):
         face_rec_frame = BiometricLogin(self)
 
         face_rec_frame.biometric_log()
-
-        id = face_rec_frame.id
-
-        if not id:
-            mb.showerror('Not found', 'This user doesn\'t have biometric information')
-            return
-
-        credentials = fetch_user_id(id)
-
-        if credentials:
-            self.change_background()
-            self.show_user_info(credentials)
-
-        else:
-            mb.showerror('Not found', 'User not found')
 
     def face_register(self):
         face_rec_frame = BiometricRegister(self)
