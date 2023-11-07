@@ -3,7 +3,7 @@ from PIL import Image, ImageTk
 import mediapipe as mp
 import cv2
 import imutils
-from math import hypot
+import math
 
 
 class BaseVideo(Toplevel):
@@ -123,12 +123,12 @@ class BaseVideo(Toplevel):
         # Right eye
         x1, y1 = li[145][1:]
         x2, y2 = li[159][1:]
-        length1 = hypot(x2 - x1, y2 - y1)
+        length1 = math.hypot(x2 - x1, y2 - y1)
 
         # Left eye
         x3, y3 = li[374][1:]
         x4, y4 = li[386][1:]
-        length2 = hypot(x4 - x3, y4 - y3)
+        length2 = math.hypot(x4 - x3, y4 - y3)
         # print(f'Ojo Izquierdo: {length1}\nOjo derecho: {length2}')
 
         # Parietal
