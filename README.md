@@ -1,5 +1,6 @@
 # Reconocimiento facial Antispoofing
-- Proyecto de reconocimiento facial basado en Python
+- Proyecto de reconocimiento facial basado en Python.
+- Desarrollado con POO.
 - Proporciona registro e ingreso tanto con reconocimiento facial como con credenciales convencionales (usuario y contraseña).
 - Reconocimiento facial creado con filtro antispoofing, lo cual obliga al usuario mirar frente a la camara y pestañear tres veces.
 - Se utiliza SQLite como motor de base de datos - Tkinter como GUI
