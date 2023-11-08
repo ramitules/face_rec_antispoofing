@@ -1,5 +1,16 @@
 import sqlite3 as sql
+import bcrypt
 from tkinter import messagebox as mb
+
+
+def hash_password(pas: str):  # Improved security with hashed password
+    password = pas.encode('utf-8')  # to bytes
+
+    salt = bcrypt.gensalt()  # Generates random salt
+
+    hashed_password = bcrypt.hashpw(password, salt)
+
+    return hashed_password
 
 
 def create_table():
@@ -11,8 +22,7 @@ def create_table():
             id INTEGER NOT NULL,
             name TEXT NOT NULL DEFAULT Unknown,
             user TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL,
-            face INTEGER,
+            password BLOB NOT NULL,
             PRIMARY KEY (id AUTOINCREMENT)
             )'''
     try:
@@ -29,7 +39,9 @@ def create_table():
 
 
 def new_user(name: str, user: str, pas: str):
-    create_table()
+    create_table()  # Creates database if it doesn't exists
+
+    password = hash_password(pas)
 
     connection = sql.connect('./database/users.db')
 
@@ -40,7 +52,7 @@ def new_user(name: str, user: str, pas: str):
 
     try:
         with connection:  # Execute insertion
-            connection.execute(query, (name, user, pas))
+            connection.execute(query, (name, user, password))
 
     except sql.IntegrityError:  # Raise error if 'user' already exists (UNIQUE)
         mb.showerror(
@@ -56,18 +68,23 @@ def new_user(name: str, user: str, pas: str):
 
 
 def fetch_user(user: str, pas: str):
-    create_table()
+    create_table()  # Creates database if it doesn't exists
 
     connection = sql.connect('./database/users.db')
 
-    query = 'SELECT * FROM users WHERE user = ? AND password = ?'
+    query = 'SELECT * FROM users WHERE user = ?'  # Select entire row
 
-    res = connection.execute(query, (user, pas)).fetchone()
+    res = connection.execute(query, (user,)).fetchone()
 
     connection.close()
 
-    if not res:
+    if not res:  # If user is not in the database, return NONE
         return None
+
+    db_password = res[3]  # id - name - user - [password]
+
+    if not bcrypt.checkpw(pas.encode('utf-8'), db_password):
+        return None  # If password is incorrect, return NONE
 
     res = [x for x in res]
 
@@ -75,8 +92,8 @@ def fetch_user(user: str, pas: str):
 
 
 def fetch_user_id(id: int):
-    if create_table():
-        mb.showwarning(
+    if create_table():  # Creates database if it doesn't exists
+        mb.showwarning(  # Return if it is empty
             title='No data',
             message='This database has no data'
         )
